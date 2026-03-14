@@ -1,0 +1,3 @@
+Mar 14 00:01:11 host app[123]: INFO Service started
+Mar 14 00:01:13 host app[123]: WARNING High memory usage
+Mar 14 00:01:15 host app[123]: ERROR Failed health check

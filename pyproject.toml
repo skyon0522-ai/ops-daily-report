@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ops-daily-report"
+version = "0.1.0"
+description = "Minimal CLI for summarizing Linux logs"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Ops Daily Report" }]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+ops-daily-report = "ops_daily_report.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
