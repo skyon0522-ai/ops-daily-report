@@ -5,11 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ops-daily-report"
 version = "0.1.0"
-description = "Minimal CLI for summarizing Linux logs"
+description = "Offline template summaries and baseline comparisons for local operations logs"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{ name = "Ops Daily Report" }]
-dependencies = []
+dependencies = ["cachetools==5.3.1"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
@@ -19,3 +19,6 @@ ops-daily-report = "ops_daily_report.cli:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.setuptools.package-data]
+"ops_daily_report._vendor.drain3" = ["*.txt"]

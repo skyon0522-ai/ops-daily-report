@@ -1,0 +1,4 @@
+Mar 14 00:01:11 host app[123]: ERROR Health check failed for shard 3 after 120 ms
+Mar 14 00:01:12 host app[123]: WARNING Queue depth 18 on pool blue
+Mar 14 00:01:13 host app[123]: INFO Started serving requests
+Mar 14 00:01:14 host app[123]: ERROR Disk pressure on node 5

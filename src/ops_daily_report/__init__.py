@@ -1,5 +1,5 @@
-"""ops_daily_report package."""
+"""Offline summaries and template comparisons for local operations logs."""
 
-__all__ = ["summarize_log_lines"]
+from .report import build_report, render_markdown
 
-from .parser import summarize_log_lines
+__all__ = ["build_report", "render_markdown"]

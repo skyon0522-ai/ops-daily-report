@@ -1,2 +1,10 @@
 __pycache__/
 *.pyc
+.venv/
+build/
+dist/
+reports/*
+!reports/.gitkeep
+.pytest_cache/
+*.egg-info/
+/implementation-receipt.json

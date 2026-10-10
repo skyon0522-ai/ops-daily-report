@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "engine": {
+    "name": "Drain3",
+    "commit": "0fb6d6e1828838fa05c8f6fa5cda878e02ea79c7",
+    "settings": {
+      "depth": 4,
+      "sim_th": 0.4,
+      "max_children": 1000,
+      "miner_scope": "per_service",
+      "shared_pass_order": "baseline_then_current"
+    }
+  },
+  "inputs": {
+    "current_files": 1,
+    "baseline_files": 1,
+    "current_unparsed_lines": 1,
+    "baseline_unparsed_lines": 0,
+    "warnings": [
+      "1 line(s) in current input did not match a supported header; they are grouped as UNKNOWN without retaining the raw text."
+    ]
+  },
+  "totals": {
+    "current": {
+      "lines": 6,
+      "levels": {
+        "ERROR": 3,
+        "WARNING": 1,
+        "INFO": 1,
+        "DEBUG": 0,
+        "CRITICAL": 0,
+        "UNKNOWN": 1
+      }
+    },
+    "baseline": {
+      "lines": 4,
+      "levels": {
+        "ERROR": 2,
+        "WARNING": 1,
+        "INFO": 1,
+        "DEBUG": 0,
+        "CRITICAL": 0,
+        "UNKNOWN": 0
+      }
+    }
+  },
+  "patterns": [
+    {
+      "id": "9f797fabe5189d30e4b01c98991090512586a966774867901e56af795875b43e",
+      "service": "database",
+      "template": "Connection timeout on node 2",
+      "current_count": 1,
+      "baseline_count": 0,
+      "delta": 1,
+      "status": "new",
+      "levels": {
+        "ERROR": 1,
+        "WARNING": 0,
+        "INFO": 0,
+        "DEBUG": 0,
+        "CRITICAL": 0,
+        "UNKNOWN": 0
+      }
+    },
+    {
+      "id": "8a6a297530169316f133507c1bac3b56153a362fb6d5b2bef7cafe51e5856478",
+      "service": "app",
+      "template": "Health check failed for shard <*> after <*> ms",
+      "current_count": 2,
+      "baseline_count": 1,
+      "delta": 1,
+      "status": "recurring",
+      "levels": {
+        "ERROR": 2,
+        "WARNING": 0,
+        "INFO": 0,
+        "DEBUG": 0,
+        "CRITICAL": 0,
+        "UNKNOWN": 0
+      }
+    },
+    {
+      "id": "02d872b31685c18632cb1dd21aad2f3ac8de0fde5501295eb88d9f0dd266d373",
+      "service": "app",
+      "template": "Queue depth <*> on pool blue",
+      "current_count": 1,
+      "baseline_count": 1,
+      "delta": 0,
+      "status": "recurring",
+      "levels": {
+        "ERROR": 0,
+        "WARNING": 1,
+        "INFO": 0,
+        "DEBUG": 0,
+        "CRITICAL": 0,
+        "UNKNOWN": 0
+      }
+    },
+    {
+      "id": "463c9f10016573fd7339637d59652c33a2c1b964600f680330daec1acb754222",
+      "service": "unknown",
+      "template": "Unsupported log line",
+      "current_count": 1,
+      "baseline_count": 0,
+      "delta": 1,
+      "status": "new",
+      "levels": {
+        "ERROR": 0,
+        "WARNING": 0,
+        "INFO": 0,
+        "DEBUG": 0,
+        "CRITICAL": 0,
+        "UNKNOWN": 1
+      }
+    },
+    {
+      "id": "97d2f0566fa55870e99dea24e082222b07b57384daac6a4b38cb3ecea30b1fc1",
+      "service": "app",
+      "template": "Started serving requests",
+      "current_count": 1,
+      "baseline_count": 1,
+      "delta": 0,
+      "status": "recurring",
+      "levels": {
+        "ERROR": 0,
+        "WARNING": 0,
+        "INFO": 1,
+        "DEBUG": 0,
+        "CRITICAL": 0,
+        "UNKNOWN": 0
+      }
+    },
+    {
+      "id": "8ea63965a64d3c7b810394cb26c50a101b818bc316f63b84bf179e2422030618",
+      "service": "app",
+      "template": "Disk pressure on node 5",
+      "current_count": 0,
+      "baseline_count": 1,
+      "delta": -1,
+      "status": "absent",
+      "levels": {
+        "ERROR": 0,
+        "WARNING": 0,
+        "INFO": 0,
+        "DEBUG": 0,
+        "CRITICAL": 0,
+        "UNKNOWN": 0
+      }
+    }
+  ]
+}

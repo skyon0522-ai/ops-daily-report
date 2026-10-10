@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "purpose": "Record the exact upstream code copied into the local Drain3 parser subset and the limited packaging adaptations.",
+  "upstream": {
+    "repository": "https://github.com/logpai/Drain3",
+    "ref": "master",
+    "commit": "0fb6d6e1828838fa05c8f6fa5cda878e02ea79c7",
+    "version": "0.9.11",
+    "commit_date_utc": "2025-02-04T02:49:05Z",
+    "commit_verification": "Read-only git ls-remote matched refs/heads/master and the GitHub commit API returned this SHA on 2026-10-10.",
+    "files": [
+      {
+        "upstream_path": "drain3/drain.py",
+        "upstream_url": "https://raw.githubusercontent.com/logpai/Drain3/0fb6d6e1828838fa05c8f6fa5cda878e02ea79c7/drain3/drain.py",
+        "local_path": "src/ops_daily_report/_vendor/drain3/drain.py",
+        "license": "MIT",
+        "upstream_sha256": "ac2125c49d5d1a4ea089542925d64d0a2008960bc1e2393c924e2010cce44508",
+        "local_sha256": "7845d55f1989843425b06a34df09cfdf039aa8d9258825fb2e9e3d0a0cad836a",
+        "adaptation": "Only the profiler import changes from the absolute drain3.simple_profiler path to the private package's relative .simple_profiler path. Algorithm code is otherwise unchanged."
+      },
+      {
+        "upstream_path": "drain3/simple_profiler.py",
+        "upstream_url": "https://raw.githubusercontent.com/logpai/Drain3/0fb6d6e1828838fa05c8f6fa5cda878e02ea79c7/drain3/simple_profiler.py",
+        "local_path": "src/ops_daily_report/_vendor/drain3/simple_profiler.py",
+        "license": "Apache-2.0 per the upstream SPDX header",
+        "upstream_sha256": "0e121dd6e62457fdf419cab256b5172febda4a0e2520a24555cf92e614d2ec9d",
+        "local_sha256": "0e121dd6e62457fdf419cab256b5172febda4a0e2520a24555cf92e614d2ec9d",
+        "adaptation": "None. This file is unchanged from the pinned Drain3 commit."
+      },
+      {
+        "upstream_path": "tests/test_drain.py",
+        "upstream_url": "https://raw.githubusercontent.com/logpai/Drain3/0fb6d6e1828838fa05c8f6fa5cda878e02ea79c7/tests/test_drain.py",
+        "local_path": "tests/vendor/test_drain3_source.py",
+        "license": "MIT per the upstream SPDX header",
+        "upstream_sha256": "822e8bc10f362b3d0742d7ea336317ebcdc189fdda7f002343eaf39977f6c15f",
+        "local_sha256": "46c633242b4d273c804747832286d485142ae4291afdc5a429a1b0d971fe05ff",
+        "adaptation": "The import path changes to ops_daily_report._vendor.drain3.drain and one terminal newline is added; the eight upstream behavioral tests are retained."
+      },
+      {
+        "upstream_path": "LICENSE.txt",
+        "upstream_url": "https://raw.githubusercontent.com/logpai/Drain3/0fb6d6e1828838fa05c8f6fa5cda878e02ea79c7/LICENSE.txt",
+        "local_path": "src/ops_daily_report/_vendor/drain3/LICENSE.txt",
+        "license": "MIT",
+        "upstream_sha256": "5bb48eead3bcc5613fae4d8a59a9248e9a3828f2c2d8cf772c543f2d2d1aee8c",
+        "local_sha256": "5bb48eead3bcc5613fae4d8a59a9248e9a3828f2c2d8cf772c543f2d2d1aee8c",
+        "adaptation": "None."
+      }
+    ]
+  },
+  "license_texts": [
+    {
+      "path": "src/ops_daily_report/_vendor/drain3/LICENSE-APACHE-2.0.txt",
+      "license": "Apache-2.0",
+      "source": "https://www.apache.org/licenses/LICENSE-2.0.txt",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    }
+  ],
+  "local_package": {
+    "paths": [
+      "src/ops_daily_report/_vendor/__init__.py",
+      "src/ops_daily_report/_vendor/drain3/__init__.py"
+    ],
+    "description": "Small locally authored package initializers expose the copied low-level Drain API. The upstream drain3/__init__.py and TemplateMiner, persistence, configuration, Redis, and Kafka integrations were not copied."
+  },
+  "runtime_dependency": {
+    "name": "cachetools",
+    "version": "5.3.1",
+    "reason": "Drain3 drain.py imports cachetools.LRUCache and Cache; the exact version is pinned in the Drain3 lockfile and in this project's pyproject.toml."
+  },
+  "source_boundary": "Drain3 supplies message-template clustering. Header parsing, severity counts, baseline ordering and comparison, stable IDs, Markdown/HTML/JSON report behavior, and operator-facing limits are local project code and are tested separately. No anomaly accuracy, diagnosis, benchmark, incident detection, or business-value claim follows from the copied source or its paper."
+}
