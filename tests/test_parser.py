@@ -7,6 +7,7 @@ from ops_daily_report.parser import (
     load_log_lines,
     load_logs_from_dir,
     parse_log_line,
+    scan_log_lines,
     summarize_log_lines,
 )
 
@@ -79,3 +80,31 @@ def test_missing_and_non_directory_inputs_are_reported(tmp_path: Path):
     file_path.write_text("INFO ready\n", encoding="utf-8")
     with pytest.raises(NotADirectoryError):
         load_log_lines(file_path)
+
+
+@pytest.mark.parametrize("content", [
+    "", "\n", "\r", "\r\n", "first\n\nlast", "first\nlast\n",
+    "\n\r\v\f\x1c\x1d\x1e\x85\u2028\u2029".join(["first", "", "last"]),
+    "x" * 65535 + "\r\nnext\n", "x" * 131073 + "\u2028next",
+    "é" * 65536 + "\nnext", "x" * 65535 + "\u2028\u2028last",
+    "x" * (8 * 1024 * 1024) + "\nnext",
+], ids=["empty", "lf", "cr", "crlf", "blank", "trailing", "all-separators",
+         "boundary-crlf", "long-line", "unicode-boundary", "boundary-separator", "large-line"])
+def test_scanner_preserves_splitlines_across_chunk_boundaries(tmp_path: Path, content: str):
+    path = tmp_path / "app.log"
+    path.write_bytes(content.encode("utf-8"))
+    expected = path.read_text(encoding="utf-8").splitlines()
+
+    lines, file_count = scan_log_lines(tmp_path)
+
+    assert file_count == 1
+    assert [line for _, line in lines] == expected
+
+
+def test_scanner_reports_late_invalid_utf8(tmp_path: Path):
+    path = tmp_path / "app.log"
+    path.write_bytes(b"INFO ready\n" * 10000 + b"\xff")
+    lines, _ = scan_log_lines(tmp_path)
+
+    with pytest.raises(ValueError, match="Log file is not valid UTF-8"):
+        list(lines)

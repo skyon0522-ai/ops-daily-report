@@ -7,74 +7,63 @@ from hashlib import sha256
 from pathlib import Path
 
 from ._vendor.drain3 import Drain
-from .parser import LEVELS, ParsedLogLine, load_log_lines, parse_log_line
+from .parser import LEVELS, parse_log_line, scan_log_lines
 
 
 DRAIN3_COMMIT = "0fb6d6e1828838fa05c8f6fa5cda878e02ea79c7"
 DRAIN_SETTINGS = {"depth": 4, "sim_th": 0.4, "max_children": 1000}
 
 
-def _read_snapshot(directory: Path, label: str) -> tuple[list[ParsedLogLine], int, int, list[str]]:
-    raw_records, file_count = load_log_lines(directory)
-    parsed = [parse_log_line(line) for _, line in raw_records]
-    unparsed = sum(not item.recognized_header for item in parsed)
-    warnings = []
-    if file_count == 0:
-        warnings.append(f"{label.capitalize()} input contains no .log files; zero messages were analyzed.")
-    if unparsed:
-        warnings.append(
-            f"{unparsed} line(s) in {label} input did not match a supported header; "
-            "they are grouped as UNKNOWN without retaining the raw text."
-        )
-    return parsed, file_count, unparsed, warnings
-
-
-def _totals(records: list[ParsedLogLine]) -> dict:
-    counts = Counter(item.severity for item in records)
-    return {"lines": len(records), "levels": {level: counts[level] for level in LEVELS}}
-
-
 def build_report(log_dir: Path, baseline_dir: Path | None = None) -> dict:
     """Build a deterministic report from local logs without changing the inputs."""
 
-    current, current_files, current_unparsed, warnings = _read_snapshot(Path(log_dir), "current")
-    baseline = None
-    baseline_files = None
-    baseline_unparsed = None
-    if baseline_dir is not None:
-        baseline_records, baseline_files, baseline_unparsed, baseline_warnings = _read_snapshot(
-            Path(baseline_dir), "baseline"
-        )
-        baseline = baseline_records
-        warnings = baseline_warnings + warnings
-    else:
-        baseline_records = []
-
     by_pattern: dict[tuple[str, str], dict] = {}
-    service_batches: dict[str, dict[str, list[ParsedLogLine]]] = {}
-    for batch_name, batch in (("baseline", baseline_records), ("current", current)):
-        for item in batch:
-            service_batches.setdefault(item.service or "unknown", {"baseline": [], "current": []})[
-                batch_name
-            ].append(item)
-
+    service_batches: dict[str, dict[str, list[tuple[str, str]]]] = {}
+    snapshots = {}
+    warnings = []
     # Each service has its own miner so Drain's max_children fallback cannot
     # merge patterns from different services. Within each miner, baseline is
     # always processed before current and final templates apply to both.
+    for batch_name, directory in (("baseline", baseline_dir), ("current", log_dir)):
+        if directory is None:
+            continue
+        lines, file_count = scan_log_lines(Path(directory))
+        counts: Counter[str] = Counter()
+        line_count = unparsed = 0
+        for _, line in lines:
+            item = parse_log_line(line)
+            line_count += 1
+            counts[item.severity] += 1
+            unparsed += not item.recognized_header
+            service = item.service or "unknown"
+            service_batches.setdefault(service, {"baseline": [], "current": []})[
+                batch_name
+            ].append((item.message, item.severity))
+        snapshots[batch_name] = {
+            "files": file_count, "unparsed": unparsed,
+            "totals": {"lines": line_count, "levels": {level: counts[level] for level in LEVELS}},
+        }
+        if file_count == 0:
+            warnings.append(f"{batch_name.capitalize()} input contains no .log files; zero messages were analyzed.")
+        if unparsed:
+            warnings.append(
+                f"{unparsed} line(s) in {batch_name} input did not match a supported header; "
+                "they are grouped as UNKNOWN without retaining the raw text."
+            )
+
     for service in sorted(service_batches):
         miner = Drain(**DRAIN_SETTINGS)
         clusters: dict[int, dict] = {}
         for batch_name in ("baseline", "current"):
-            for item in service_batches[service][batch_name]:
-                cluster, _change = miner.add_log_message(item.message)
-                record = clusters.setdefault(
-                    cluster.cluster_id,
-                    {"baseline_count": 0, "current_count": 0, "levels": Counter()},
-                )
+            for message, severity in service_batches[service][batch_name]:
+                cluster, _change = miner.add_log_message(message)
+                record = clusters.get(cluster.cluster_id)
+                if record is None:
+                    record = {"baseline_count": 0, "current_count": 0, "levels": Counter()}
+                    clusters[cluster.cluster_id] = record
                 record[f"{batch_name}_count"] += 1
                 if batch_name == "current":
-                    record["levels"][item.severity] += 1
-
+                    record["levels"][severity] += 1
         for cluster_id, record in clusters.items():
             template = miner.id_to_cluster[cluster_id].get_template() or "(empty message)"
             key = (service, template)
@@ -95,8 +84,8 @@ def build_report(log_dir: Path, baseline_dir: Path | None = None) -> dict:
     patterns = []
     for (service, template), record in by_pattern.items():
         current_count = record["current_count"]
-        baseline_count = record["baseline_count"] if baseline is not None else None
-        if baseline is None:
+        baseline_count = record["baseline_count"] if baseline_dir is not None else None
+        if baseline_dir is None:
             status = "uncompared"
             delta = None
         elif current_count == 0:
@@ -141,15 +130,15 @@ def build_report(log_dir: Path, baseline_dir: Path | None = None) -> dict:
             },
         },
         "inputs": {
-            "current_files": current_files,
-            "baseline_files": baseline_files,
-            "current_unparsed_lines": current_unparsed,
-            "baseline_unparsed_lines": baseline_unparsed,
+            "current_files": snapshots["current"]["files"],
+            "baseline_files": snapshots["baseline"]["files"] if baseline_dir is not None else None,
+            "current_unparsed_lines": snapshots["current"]["unparsed"],
+            "baseline_unparsed_lines": snapshots["baseline"]["unparsed"] if baseline_dir is not None else None,
             "warnings": warnings,
         },
         "totals": {
-            "current": _totals(current),
-            "baseline": _totals(baseline) if baseline is not None else None,
+            "current": snapshots["current"]["totals"],
+            "baseline": snapshots["baseline"]["totals"] if baseline_dir is not None else None,
         },
         "patterns": patterns,
     }

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 import re
@@ -92,8 +93,8 @@ def parse_log_line(line: str) -> ParsedLogLine:
     return ParsedLogLine("unknown", "UNKNOWN", "Unsupported log line", False)
 
 
-def load_log_lines(log_dir: Path) -> tuple[list[tuple[str, str]], int]:
-    """Read top-level UTF-8 ``*.log`` files in deterministic filename order."""
+def scan_log_lines(log_dir: Path) -> tuple[Iterator[tuple[str, str]], int]:
+    """Iterate top-level UTF-8 logs without retaining the complete input batch."""
 
     directory = Path(log_dir)
     if not directory.exists():
@@ -105,14 +106,37 @@ def load_log_lines(log_dir: Path) -> tuple[list[tuple[str, str]], int]:
         (path for path in directory.iterdir() if path.is_file() and path.suffix.lower() == ".log"),
         key=lambda path: path.name.casefold(),
     )
-    records: list[tuple[str, str]] = []
-    for path in paths:
-        try:
-            content = path.read_text(encoding="utf-8")
-        except UnicodeDecodeError as exc:
-            raise ValueError(f"Log file is not valid UTF-8: {path}") from exc
-        records.extend((path.name, line) for line in content.splitlines())
-    return records, len(paths)
+    def records() -> Iterator[tuple[str, str]]:
+        for path in paths:
+            try:
+                with path.open(encoding="utf-8") as stream:
+                    pending: list[str] = []
+                    separators = tuple("\n\r\v\f\x1c\x1d\x1e\x85\u2028\u2029")
+                    while chunk := stream.read(65536):
+                        for part in chunk.splitlines(keepends=True):
+                            if part.endswith(separators):
+                                if pending:
+                                    pending.append(part)
+                                    line = "".join(pending)
+                                    pending.clear()
+                                else:
+                                    line = part
+                                yield path.name, line[:-2] if line.endswith("\r\n") else line[:-1]
+                            else:
+                                pending.append(part)
+                    if pending:
+                        yield path.name, "".join(pending)
+            except UnicodeDecodeError as exc:
+                raise ValueError(f"Log file is not valid UTF-8: {path}") from exc
+
+    return records(), len(paths)
+
+
+def load_log_lines(log_dir: Path) -> tuple[list[tuple[str, str]], int]:
+    """Compatibility helper that materializes all supported input lines."""
+
+    records, file_count = scan_log_lines(log_dir)
+    return list(records), file_count
 
 
 def summarize_log_lines(lines: list[str]) -> dict[str, int]:

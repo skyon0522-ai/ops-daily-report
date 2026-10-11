@@ -82,6 +82,10 @@ comparison, CLI and HTML escaping. The demo check compares the three committed
 exports with a fresh run. The GitHub workflow tests Python 3.10 and 3.12; consult
 its run page for actual remote results.
 
+The report pipeline processes input incrementally. See the
+[language rationale and resource observations](docs/performance.md) for the
+matched-output memory comparison and a reproducible synthetic benchmark.
+
 ## Limits
 
 This is a local batch-review app for supported text-log headers. It does not

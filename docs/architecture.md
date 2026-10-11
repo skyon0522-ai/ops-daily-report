@@ -35,6 +35,13 @@ Each service uses a separate miner to preserve service isolation even when a
 parser's prefix-tree child limit is reached. Within each service, baseline and
 current messages share one pass and the final templates.
 
+The report path reads each input in chunks and buffers compact message/severity
+pairs per service. It then runs one miner at a time, preserving baseline-first
+ordering. It avoids full normalized record objects and repeated service strings
+per message. UTF-8 decoding and line separators are preserved. Memory still
+grows with buffered messages, service groups and templates;
+see [resource observations](performance.md).
+
 The low-level Drain3 core is executed directly. The full upstream TemplateMiner,
 serialized state, jsonpickle, Redis and Kafka adapters are not included. Report
 JSON is a data export, not executable parser state or a baseline import format.

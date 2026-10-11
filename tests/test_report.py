@@ -138,3 +138,20 @@ def test_services_remain_separate_even_when_each_drain_tree_has_one_child_slot(
         ("beta", "Same operation completed"),
     }
     assert report["engine"]["settings"]["miner_scope"] == "per_service"
+
+
+def test_report_does_not_materialize_files_with_read_text(monkeypatch, tmp_path: Path):
+    current = tmp_path / "current"
+    baseline = tmp_path / "baseline"
+    _write(current, "app.log", "INFO alpha: Completed item 42\nINFO beta: Started\n")
+    _write(baseline, "app.log", "INFO alpha: Completed item 31\n")
+
+    def reject_full_read(*args, **kwargs):
+        raise AssertionError("The report must iterate input files")
+
+    monkeypatch.setattr(Path, "read_text", reject_full_read)
+    report = build_report(current, baseline)
+
+    assert report["totals"]["current"]["lines"] == 2
+    assert report["totals"]["baseline"]["lines"] == 1
+    assert len(report["patterns"]) == 2

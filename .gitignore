@@ -8,3 +8,4 @@ reports/*
 .pytest_cache/
 *.egg-info/
 /implementation-receipt.json
+/benchmark-results/
