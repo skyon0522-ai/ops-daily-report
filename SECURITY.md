@@ -1,8 +1,10 @@
 # Security and reporting
 
-This is an independently developed demonstration, not an audited production service.
-Use synthetic inputs only. See the README Limits section for the specific data,
-authentication, deployment, and runtime boundaries before adapting it.
+This local log-review tool has not been security-audited. Use logs you are
+authorized to process, keep sensitive inputs and reports on appropriately
+protected storage, and review all exports before sharing. Template grouping
+does not redact secrets or personal information. The app makes no production
+accuracy or incident-diagnosis claim; see the [usage limits](docs/usage.md).
 
 ## Report a problem
 

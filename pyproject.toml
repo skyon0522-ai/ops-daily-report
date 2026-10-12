@@ -1,12 +1,14 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "ops-daily-report"
-version = "0.1.0"
+version = "0.2.0"
 description = "Offline template summaries and baseline comparisons for local operations logs"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
 authors = [{ name = "Ops Daily Report" }]
 dependencies = ["cachetools==5.3.1"]
@@ -21,4 +23,5 @@ ops-daily-report = "ops_daily_report.cli:main"
 testpaths = ["tests"]
 
 [tool.setuptools.package-data]
+"ops_daily_report" = ["demo_logs/*/*.log"]
 "ops_daily_report._vendor.drain3" = ["*.txt"]

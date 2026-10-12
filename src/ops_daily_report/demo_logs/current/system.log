@@ -1,0 +1,6 @@
+2026-10-10T00:01:11Z ERROR app: Health check failed for shard 4 after 135 ms
+Mar 14 00:01:12 host app[123]: ERROR Health check failed for shard 4 after 141 ms
+2026-10-10T00:01:13Z WARNING app: Queue depth 24 on pool blue
+2026-10-10T00:01:14Z INFO app: Started serving requests
+2026-10-10T00:01:15Z ERROR database: Connection timeout on node 2
+unstructured line with ERROR mentioned later

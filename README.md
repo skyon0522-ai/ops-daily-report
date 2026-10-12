@@ -1,102 +1,91 @@
 # Ops Daily Report
 
-## Problem
+Turn local service logs into a searchable, offline report of repeated messages
+and changes from a selected baseline. Review the HTML in your browser, or use
+the Markdown and JSON exports. Your input logs stay unchanged.
 
-Turn a batch of service logs into a searchable, offline report of repeated
-messages and changes from a selected baseline. Run it locally, then review the
-HTML report in your browser or use the Markdown and JSON exports.
+![Synthetic comparison report](docs/assets/report.png)
 
-## Demo
+Search templates or services, filter comparison status or current level, and
+expand a group's details. The single-file report also works without JavaScript.
 
-[![Checks](https://github.com/skyon0522-ai/ops-daily-report/actions/workflows/checks.yml/badge.svg)](https://github.com/skyon0522-ai/ops-daily-report/actions/workflows/checks.yml)
+## Install
 
-![Synthetic demo report](docs/assets/report.png)
-
-In the synthetic example, health-check failures increase from one message to
-two, a database timeout appears, and disk-pressure messages are absent from the
-current batch. These are review cues; a new template does not establish an incident.
-
-### Try the example
-
-Requires Python 3.10 or later. Example logs are synthetic and included in the
-repository; no accounts, containers or external services are needed.
+Requires Python 3.10 or later. From a downloaded or cloned checkout:
 
 ```sh
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install -e '.[dev]'
-ops-daily-report --log-dir examples/current --baseline-dir examples/baseline --output-dir reports/demo
+python -m pip install .
 ```
 
-On Windows PowerShell, activate with `.\.venv\Scripts\Activate.ps1` instead of
-the `source` command. Open `reports/demo/report.html` in your browser. Search
-templates or services, filter comparison status or current level, and inspect
-group details. The report also works without JavaScript.
+<details>
+<summary>Windows PowerShell, without activation</summary>
 
-| Synthetic result | Current | Baseline |
-| --- | ---: | ---: |
-| Messages | 6 | 4 |
-| Error-level messages | 3 | 2 |
-| Warning-level messages | 1 | 1 |
-| Unknown-level messages | 1 | 0 |
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install .
+.\.venv\Scripts\ops-daily-report.exe demo
+```
 
-The unknown-level example contains the word `ERROR` in the message body; it is
-not promoted to error severity. Levels come from supported headers.
+Use the full executable path when working in another directory.
 
-## Read and run
+</details>
 
-- [Usage and comparison meanings](docs/usage.md)
-- [Implementation and data flow](docs/architecture.md)
-- [Copied source and licenses](docs/source.md)
-- [Research basis and its limits](docs/research.md)
-- [Development and verification](docs/development.md)
-- [Committed demo outputs](examples/reports/)
+If you have the built wheel, install it instead with
+`python -m pip install /path/to/ops_daily_report-0.2.0-py3-none-any.whl`.
+After installation, the command works from any directory.
 
-For a terminal summary, run `ops-daily-report --log-dir sample_logs`.
-Omit `--baseline-dir` to leave comparison fields uncomputed. Generated files
-are not overwritten; use a fresh output directory for each run. Input logs are
-not modified. Templates can retain sensitive text: review outputs before sharing.
-
-## What this project adds
-
-The engine executes a copied, pinned subset of
-[Drain3](https://github.com/logpai/Drain3/tree/0fb6d6e1828838fa05c8f6fa5cda878e02ea79c7),
-with its source-behavior tests and license notices. Added behavior includes
-header-based levels, service separation, comparison of two batches, safe report
-presentation and local search.
-
-The method comes from He et al.,
-[Drain: An Online Log Parsing Approach with Fixed Depth Tree, ICWS 2017](https://doi.org/10.1109/ICWS.2017.13).
-That peer-reviewed paper supports the parsing method; this repository's tests
-validate its defined behavior separately.
-
-## Verification
+## Try it
 
 ```sh
-python -m pytest -q
-python scripts/check_demo.py
+ops-daily-report demo
 ```
 
-The suite includes the copied Drain3 cases and tests for this app's parsing,
-comparison, CLI and HTML escaping. The demo check compares the three committed
-exports with a fresh run. The GitHub workflow tests Python 3.10 and 3.12; consult
-its run page for actual remote results.
+The packaged synthetic logs produce `ops-daily-demo/report.html`, plus Markdown
+and JSON. The command prints the full HTML path. Add `--open` to ask your default
+browser to open it. To repeat the demo, choose a fresh directory:
 
-The report pipeline processes input incrementally. See the
-[language rationale and resource observations](docs/performance.md) for the
-matched-output memory comparison and a reproducible synthetic benchmark.
+```sh
+ops-daily-report demo --output-dir reports/another-demo --open
+```
 
-## Limits
+The example compares 6 current messages with 4 baseline messages: health-check
+failures increase, a database timeout appears, and disk-pressure messages are
+absent. These are review cues; a new template does not establish an incident.
+No accounts, containers or external services are needed to run the app.
 
-This is a local batch-review app for supported text-log headers. It does not
-select calendar days, stream live logs, assemble multiline stack traces,
-diagnose incidents or send alerts. Unsupported lines remain counted as unknown.
-Template grouping can merge or split events and depends on the selected inputs
-and parser settings. No production accuracy or incident outcome is claimed.
+## Use your own logs
 
-The app is MIT-licensed. Copied components retain their applicable MIT and
-Apache-2.0 notices; see [source and licenses](docs/source.md).
+```sh
+ops-daily-report --log-dir /path/to/current --baseline-dir /path/to/previous --output-dir reports/new-run
+```
 
-## Security and reporting
+Inputs are top-level UTF-8 `*.log` files with supported headers. Omit
+`--baseline-dir` for a single batch, or omit `--output-dir` for a terminal summary.
+Saved report files are never overwritten. Use a new output directory for each
+run, and review templates for sensitive text before sharing exports.
 
-Read [security limits and reporting guidance](SECURITY.md) before adapting this example.
+## Documentation
+
+- [Usage, supported headers and comparison meanings](docs/usage.md)
+- [Implementation and data flow](docs/architecture.md)
+- [Development, tests and distribution checks](docs/development.md)
+- [Copied source and licenses](docs/source.md)
+- [Research basis and resource observations](docs/research.md)
+- [Committed synthetic demo outputs](examples/reports/)
+- [Security and problem reporting](SECURITY.md)
+
+## Limits and license
+
+This is a local batch-review tool. It does not select calendar days, stream live
+logs, assemble multiline stack traces, diagnose incidents or send alerts.
+Unsupported lines remain counted as unknown. Template grouping can merge or
+split events; counts depend on the selected inputs. No production accuracy or
+incident outcome is claimed.
+
+The parser executes a copied, pinned subset of
+[Drain3](https://github.com/logpai/Drain3/tree/0fb6d6e1828838fa05c8f6fa5cda878e02ea79c7).
+This project adds header-based levels, service separation, batch comparisons,
+safe exports and local search. The app is MIT-licensed; copied components retain
+their MIT and Apache-2.0 notices. See [source and licenses](docs/source.md).

@@ -1,5 +1,21 @@
 # Usage
 
+## First run
+
+After installation, run `ops-daily-report` to see the available commands.
+`ops-daily-report demo` uses packaged synthetic current and baseline logs, even
+when you are outside the checkout. It writes three files to `ops-daily-demo` in
+your working directory and prints the full HTML path.
+
+```sh
+ops-daily-report demo
+ops-daily-report demo --output-dir reports/another-demo --open
+```
+
+`--open` asks the default browser to open the saved HTML. It is optional and is
+never automatic. If the browser cannot launch, the saved reports remain usable
+and the command prints a warning. Open the printed path manually.
+
 ## Generate a report
 
 Choose directories that contain the log batches you want to compare. The CLI
@@ -7,10 +23,10 @@ reads top-level `*.log` files in filename order. It does not choose calendar day
 or query remote log stores.
 
 ```sh
-ops-daily-report --log-dir examples/current --baseline-dir examples/baseline --output-dir reports/demo
+ops-daily-report --log-dir /path/to/current --baseline-dir /path/to/previous --output-dir reports/new-run
 ```
 
-Open `reports/demo/report.html` in a browser. Search a message template or service,
+Open the printed HTML path in a browser. Search a message template or service,
 filter comparison status, or show groups containing error/critical messages.
 Reset filters to restore all groups. Markdown and JSON exports are in the same
 directory. JavaScript is optional; without it, all groups remain readable.
@@ -19,11 +35,12 @@ For a single batch, omit `--baseline-dir`. Comparison fields are then uncomputed
 not zero. To print a terminal summary only, omit `--output-dir`.
 
 ```sh
-ops-daily-report --log-dir sample_logs
-ops-daily-report --log-dir /path/to/current --baseline-dir /path/to/previous --output-dir reports/new-run
+ops-daily-report --log-dir /path/to/current
+ops-daily-report --log-dir /path/to/current --output-dir reports/single-batch --open
 ```
 
 Outputs are not overwritten. Select a fresh output directory for the next run.
+Output directories must be separate from both input directories.
 Input logs are not modified. Missing directories and unreadable files produce an
 error; an existing empty directory produces an explicit empty report.
 

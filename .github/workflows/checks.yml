@@ -4,18 +4,20 @@ permissions:
   contents: read
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, windows-latest]
         python: ['3.10', '3.12']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-      - run: python -m pip install -e '.[dev]'
+      - run: python -m pip install -e '.[dev]' build
       - run: python -m pytest -q
       - run: python scripts/check_demo.py
-      - name: Check installed CLI
-        run: ops-daily-report --log-dir examples/current --baseline-dir examples/baseline --output-dir /tmp/ops-daily-smoke
+      - run: python -m build
+      - name: Verify wheel in a fresh environment outside the checkout
+        run: python scripts/check_distribution.py dist/ops_daily_report-0.2.0-py3-none-any.whl --sdist dist/ops_daily_report-0.2.0.tar.gz

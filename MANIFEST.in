@@ -1,0 +1,6 @@
+include LICENSE PROVENANCE.json SECURITY.md
+recursive-include docs *.md *.png
+recursive-include examples *.log *.json *.md *.html
+recursive-include sample_logs *.log
+recursive-include scripts *.py
+recursive-include tests *.py

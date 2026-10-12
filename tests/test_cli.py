@@ -1,8 +1,98 @@
 import json
 import sys
+import webbrowser
 from pathlib import Path
 
+import pytest
+
 from ops_daily_report.cli import _write_text, main
+
+
+def test_no_arguments_offer_demo_and_own_data_without_creating_files(monkeypatch, capsys, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(sys, "argv", ["ops-daily-report"])
+
+    assert main() == 0
+
+    output = capsys.readouterr()
+    assert "ops-daily-report demo" in output.out
+    assert "--log-dir PATH" in output.out
+    assert output.err == ""
+    assert not list(tmp_path.iterdir())
+
+
+def test_demo_uses_packaged_comparison_outside_checkout(monkeypatch, capsys, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(sys, "argv", ["ops-daily-report", "demo"])
+    monkeypatch.setattr(webbrowser, "open", lambda *_: pytest.fail("Browser must be opt-in"))
+
+    assert main() == 0
+
+    report = json.loads((tmp_path / "ops-daily-demo/report.json").read_text(encoding="utf-8"))
+    assert report["totals"]["current"]["lines"] == 6
+    assert report["totals"]["baseline"]["lines"] == 4
+    assert report["inputs"]["current_files"] == report["inputs"]["baseline_files"] == 1
+    assert {pattern["status"] for pattern in report["patterns"]} == {"new", "recurring", "absent"}
+    assert "HTML report:" in capsys.readouterr().out
+
+
+def test_demo_repeat_refuses_replacement_and_keeps_every_file(monkeypatch, capsys, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(sys, "argv", ["ops-daily-report", "demo"])
+    assert main() == 0
+    output_dir = tmp_path / "ops-daily-demo"
+    before = {path.name: path.read_bytes() for path in output_dir.iterdir()}
+
+    assert main() == 2
+
+    assert "Refusing to overwrite" in capsys.readouterr().err
+    assert {path.name: path.read_bytes() for path in output_dir.iterdir()} == before
+
+
+def test_demo_can_use_an_explicit_output_and_open_the_saved_report(monkeypatch, tmp_path):
+    output_dir = tmp_path / "demo with spaces"
+    monkeypatch.setattr(sys, "argv", ["ops-daily-report", "demo", "--output-dir", str(output_dir), "--open"])
+    opened = []
+    monkeypatch.setattr(webbrowser, "open", lambda uri: opened.append(uri) or True)
+
+    assert main() == 0
+
+    assert opened == [(output_dir / "report.html").resolve().as_uri()]
+    assert (output_dir / "report.html").is_file()
+
+
+@pytest.mark.parametrize("failure", [False, webbrowser.Error("no browser"), OSError("launch failed")])
+def test_browser_failure_keeps_successful_reports(monkeypatch, capsys, tmp_path, failure):
+    output_dir = tmp_path / "report"
+    monkeypatch.setattr(sys, "argv", ["ops-daily-report", "demo", "--output-dir", str(output_dir), "--open"])
+
+    def open_browser(uri):
+        if isinstance(failure, Exception):
+            raise failure
+        return failure
+
+    monkeypatch.setattr(webbrowser, "open", open_browser)
+
+    assert main() == 0
+
+    assert "warning: Browser could not open the report" in capsys.readouterr().err
+    assert {path.name for path in output_dir.iterdir()} == {"report.json", "report.md", "report.html"}
+
+
+@pytest.mark.parametrize("arguments", [
+    ["demo", "--log-dir", "logs"],
+    ["demo", "--baseline-dir", "logs"],
+    ["--output-dir", "report"],
+    ["--log-dir", "logs", "--open"],
+])
+def test_incomplete_or_conflicting_commands_show_actionable_errors(monkeypatch, capsys, arguments):
+    monkeypatch.setattr(sys, "argv", ["ops-daily-report", *arguments])
+
+    with pytest.raises(SystemExit) as error:
+        main()
+
+    assert error.value.code == 2
+    assert "error:" in capsys.readouterr().err
 
 
 def test_cli_prints_readable_markdown_by_default(monkeypatch, capsys, tmp_path: Path):
